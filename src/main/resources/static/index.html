@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Controle de Presença</title>
+
+<style>
+    body {
+        font-family: Arial;
+        background: #121212;
+        color: white;
+        text-align: center;
+    }
+
+    .card {
+        background: #1e1e1e;
+        padding: 20px;
+        margin: 20px auto;
+        width: 300px;
+        border-radius: 10px;
+    }
+
+    .status {
+        font-size: 20px;
+        font-weight: bold;
+    }
+
+    .verde { color: #00ff88; }
+    .vermelho { color: #ff4444; }
+
+    button {
+        padding: 10px;
+        margin: 5px;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+    }
+
+    input {
+        padding: 8px;
+        width: 80px;
+    }
+</style>
+</head>
+
+<body>
+
+<h1>Controle de Presença</h1>
+
+<div class="card">
+    <p>Pessoas: <span id="pessoas">0</span></p>
+    <p>Limite: <span id="limite">0</span></p>
+    <p id="status" class="status">---</p>
+</div>
+
+<div class="card">
+    <input type="number" id="novoLimite" placeholder="Limite">
+    <button onclick="alterarLimite()">Alterar</button>
+    <br>
+    <button onclick="resetar()">Resetar</button>
+</div>
+
+<div class="card">
+    <button onclick="entrada()">➕ Entrada</button>
+    <button onclick="saida()">➖ Saída</button>
+</div>
+
+<script>
+const API = "http://localhost:8080";
+
+function atualizar() {
+    fetch(API + "/status")
+    .then(r => r.json())
+    .then(d => {
+        document.getElementById("pessoas").innerText = d.pessoas;
+        document.getElementById("limite").innerText = d.limite;
+
+        let status = document.getElementById("status");
+
+        if (d.pessoas >= d.limite) {
+            status.innerText = "LOTADO";
+            status.className = "status vermelho";
+        } else {
+            status.innerText = "DISPONÍVEL";
+            status.className = "status verde";
+        }
+    });
+}
+
+function entrada() {
+    fetch(API + "/entrada", { method: "POST" })
+    .then(() => atualizar());
+}
+
+function saida() {
+    fetch(API + "/saida", { method: "POST" })
+    .then(() => atualizar());
+}
+
+function resetar() {
+    fetch(API + "/reset", { method: "POST" })
+    .then(() => atualizar());
+}
+
+function alterarLimite() {
+    let valor = document.getElementById("novoLimite").value;
+
+    fetch(API + "/config/limite?limite=" + valor, {
+        method: "POST"
+    }).then(() => atualizar());
+}
+
+setInterval(atualizar, 2000);
+atualizar();
+</script>
+
+</body>
+</html>
